@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Создание опроса</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+<div class="container mt-5">
+    <h2>Конструктор опроса</h2>
+    <form action="/admin/create" method="post">
+        <div id="questions-container">
+            <!-- Сюда JS будет добавлять вопросы -->
+        </div>
+
+        <button type="button" class="btn btn-info mt-3" onclick="addQuestion()" id="addBtn">+ Добавить вопрос</button>
+        <hr>
+        <button type="submit" class="btn btn-success">Сохранить и получить ссылку</button>
+        <a href="/home" class="btn btn-secondary">Назад</a>
+    </form>
+</div>
+
+<script>
+    let count = 0;
+
+    function addQuestion() {
+        if (count >= 10) {
+            alert("Максимум 10 вопросов!");
+            return;
+        }
+        count++;
+
+        const div = document.createElement('div');
+        div.className = 'mb-3 card p-3';
+        div.innerHTML = `
+            <label class="form-label">Вопрос №${count}</label>
+            <input type="text" name="questionTexts" class="form-control" placeholder="Например: Как вы относитесь к труду?" required>
+            <div class="mt-2 text-muted small">Варианты ответа: Да / Нет (фиксировано)</div>
+        `;
+        document.getElementById('questions-container').appendChild(div);
+
+        if(count === 10) {
+            document.getElementById('addBtn').disabled = true;
+        }
+    }
+
+    // Добавим сразу один вопрос при загрузке
+    addQuestion();
+</script>
+</body>
+</html>

@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Статистика</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+<div class="container mt-5">
+    <h3>Результаты опроса</h3>
+
+    <div class="alert alert-info">
+        Всего прохождений: <b th:text="${count}">0</b>
+    </div>
+
+    <div th:if="${submissions.empty}" class="text-center mt-5">
+        <h4>Пока никто не прошел этот тест 😔</h4>
+    </div>
+
+    <table class="table table-striped table-bordered" th:unless="${submissions.empty}">
+        <thead class="table-dark">
+        <tr>
+            <th>Имя</th>
+            <th>Фамилия</th>
+            <th>Email</th>
+            <th>Ответы</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="sub : ${submissions}">
+            <td th:text="${sub.user.name}">Имя</td>
+            <td th:text="${sub.user.surname}">Фамилия</td>
+            <td th:text="${sub.user.email}">Email</td>
+            <td>
+                <ul class="list-unstyled mb-0">
+                    <li th:each="ans : ${sub.answers}">
+                        <small th:text="${ans.question.text}"></small>:
+                        <b th:text="${ans.yesNoValue} ? 'ДА' : 'НЕТ'"
+                           th:class="${ans.yesNoValue} ? 'text-success' : 'text-danger'"></b>
+                    </li>
+                </ul>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+    <a href="/manager" class="btn btn-secondary mt-3">Искать другой</a>
+    <a href="/home" class="btn btn-primary mt-3">На главную</a>
+</div>
+</body>
+</html>
