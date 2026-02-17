@@ -1,6 +1,5 @@
 package com.example.demo.controller;
 
-// Добавь эти строки в начало файла:
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -10,11 +9,10 @@ import org.springframework.ui.Model;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
 
-// Твои репозитории и модели (проверь пути!)
 import com.example.demo.repository.UserRepository;
 import com.example.demo.model.User;
 
-@Controller // Теперь эта аннотация будет работать
+@Controller
 public class AuthController {
     @Autowired
     private UserRepository userRepo;
@@ -27,6 +25,12 @@ public class AuthController {
 
     @PostMapping("/register")
     public String register(@ModelAttribute User user, HttpSession session) {
+        // --- ПРОВЕРКА НА ДУБЛИКАТЫ ---
+        // Если пользователь с таким Email уже есть, не сохраняем его снова
+        if (userRepo.findByEmail(user.getEmail()) != null) {
+            return "redirect:/register?alreadyExists";
+        }
+
         userRepo.save(user);
         session.setAttribute("user", user);
         return "redirect:/home";
@@ -39,7 +43,9 @@ public class AuthController {
 
     @PostMapping("/login")
     public String login(@RequestParam String email, @RequestParam String password, HttpSession session) {
+        // Теперь здесь будет находиться ровно ОДИН пользователь или NULL
         User user = userRepo.findByEmail(email);
+
         if (user != null && user.getPassword().equals(password)) {
             session.setAttribute("user", user);
             return "redirect:/home";
