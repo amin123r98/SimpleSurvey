@@ -138,4 +138,41 @@ public class MainController {
         model.addAttribute("submissions", submissions);
         return "manager_stats";
     }
+
+    // --- ЮЗЕР (Ручной ввод ссылки) ---
+    @GetMapping("/user/search")
+    public String userSearchPage() {
+        return "user_search";
+    }
+
+    @PostMapping("/user/search")
+    public String searchSurveyToTake(@RequestParam String linkOrUuid, Model model) {
+        // 1. Очистка и парсинг UUID (то же самое, что у менеджера)
+        String cleanLink = linkOrUuid.trim();
+        if (cleanLink.endsWith("/")) {
+            cleanLink = cleanLink.substring(0, cleanLink.length() - 1);
+        }
+
+        String uuid;
+        if (cleanLink.contains("/")) {
+            uuid = cleanLink.substring(cleanLink.lastIndexOf("/") + 1);
+        } else {
+            uuid = cleanLink;
+        }
+
+        // 2. Проверяем, существует ли опрос
+        Survey survey = surveyRepo.findByUuid(uuid);
+        if (survey == null) {
+            model.addAttribute("error", "Опрос не найден! Проверьте ссылку или код.");
+            return "user_search";
+        }
+
+        // 3. Если найден — редирект на страницу прохождения
+        return "redirect:/survey/" + uuid;
+    }
+
+
+
+
+
 }

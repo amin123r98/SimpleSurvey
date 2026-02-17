@@ -1,4 +1,4 @@
-package com.example.demo.сontroller;
+package com.example.demo.controller;
 
 // Добавь эти строки в начало файла:
 import org.springframework.stereotype.Controller;
