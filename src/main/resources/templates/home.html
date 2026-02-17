@@ -1,40 +1,118 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
-    <title>Главная</title>
+    <title>Главная панель</title>
+    <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-</head>
-<body class="bg-light">
-<div class="container mt-5 text-center">
-    <h1>Привет, <span th:text="${user.name}">Пользователь</span>!</h1>
-    <p class="lead">Выберите вашу роль:</p>
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
 
-    <div class="row justify-content-center mt-4">
-        <div class="col-md-3">
-            <div class="card p-3 mb-3">
-                <h5>Админ</h5>
-                <p>Создать новый опрос</p>
-                <a href="/admin/create" class="btn btn-primary w-100">Конструктор</a>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card p-3 mb-3">
-                <h5>Менеджер</h5>
-                <p>Посмотреть результаты</p>
-                <a href="/manager" class="btn btn-success w-100">Статистика</a>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card p-3 mb-3">
-                <h5>Юзер</h5>
-                <p>Есть код или ссылка?</p>
-                <!-- Кнопка теперь ведет на страницу поиска -->
-                <a href="/user/search" class="btn btn-warning w-100">Пройти опрос</a>
-            </div>
-        </div>
+    <style>
+        body {
+            background-color: #f8f9fa; /* Светло-серый фон */
+        }
+        .hero-section {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            padding: 3rem;
+            margin-bottom: 3rem;
+        }
+        .role-card {
+            border: none;
+            border-radius: 15px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            height: 100%; /* Одинаковая высота */
+        }
+        .role-card:hover {
+            transform: translateY(-10px); /* Всплытие вверх */
+            box-shadow: 0 10px 20px rgba(0,0,0,0.15); /* Тень */
+        }
+        .icon-box {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+        /* Цвета для иконок */
+        .text-admin { color: #0d6efd; }
+        .text-manager { color: #198754; }
+        .text-user { color: #ffc107; }
+    </style>
+</head>
+<body>
+
+<div class="container py-5">
+
+    <!-- Блок приветствия -->
+    <div class="hero-section text-center">
+        <h1 class="display-5 fw-bold text-dark">Привет, <span th:text="${user.name}" class="text-primary">User</span>! 👋</h1>
+        <p class="lead text-muted">Добро пожаловать в панель управления SimpleSurvey.</p>
+        <hr class="my-4 w-25 mx-auto">
+        <p>Выберите роль, чтобы продолжить работу:</p>
     </div>
 
-    <a href="/logout" class="btn btn-outline-danger mt-5">Выход</a>
+    <!-- Карточки ролей -->
+    <div class="row g-4 justify-content-center">
+
+        <!-- Карточка АДМИНА -->
+        <div class="col-md-4">
+            <div class="card role-card shadow-sm h-100 p-4 text-center">
+                <div class="card-body d-flex flex-column">
+                    <div class="icon-box text-admin">
+                        <i class="bi bi-gear-wide-connected"></i>
+                    </div>
+                    <h3 class="card-title fw-bold">Администратор</h3>
+                    <p class="card-text text-muted flex-grow-1">Создание новых опросов, управление вопросами и генерация ссылок.</p>
+                    <a href="/admin/create" class="btn btn-primary btn-lg w-100 mt-3 rounded-pill">
+                        <i class="bi bi-plus-lg me-2"></i>Создать опрос
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Карточка МЕНЕДЖЕРА -->
+        <div class="col-md-4">
+            <div class="card role-card shadow-sm h-100 p-4 text-center">
+                <div class="card-body d-flex flex-column">
+                    <div class="icon-box text-manager">
+                        <i class="bi bi-bar-chart-line-fill"></i>
+                    </div>
+                    <h3 class="card-title fw-bold">Менеджер</h3>
+                    <p class="card-text text-muted flex-grow-1">Анализ результатов, просмотр статистики и ответов пользователей.</p>
+                    <a href="/manager" class="btn btn-success btn-lg w-100 mt-3 rounded-pill">
+                        <i class="bi bi-search me-2"></i>Статистика
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Карточка ЮЗЕРА -->
+        <div class="col-md-4">
+            <div class="card role-card shadow-sm h-100 p-4 text-center">
+                <div class="card-body d-flex flex-column">
+                    <div class="icon-box text-user">
+                        <i class="bi bi-person-check-fill"></i>
+                    </div>
+                    <h3 class="card-title fw-bold">Пользователь</h3>
+                    <p class="card-text text-muted flex-grow-1">Прохождение активных опросов по коду или полученной ссылке.</p>
+                    <a href="/user/search" class="btn btn-warning btn-lg w-100 mt-3 rounded-pill text-white">
+                        <i class="bi bi-play-circle-fill me-2"></i>Пройти опрос
+                    </a>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Кнопка выхода -->
+    <div class="text-center mt-5">
+        <a href="/logout" class="btn btn-outline-danger px-4">
+            <i class="bi bi-box-arrow-right me-2"></i>Выйти из системы
+        </a>
+    </div>
+
 </div>
+
+<!-- Скрипты Bootstrap (необязательно для CSS, но полезно для интерактивности) -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
