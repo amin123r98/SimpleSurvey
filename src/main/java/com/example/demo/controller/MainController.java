@@ -71,9 +71,8 @@ public class MainController {
             return "user_search";
         }
 
-        // --- ПРОВЕРКА: Проходил ли уже? ---
+        // Проверка: проходил ли уже?
         if (submissionRepo.existsBySurveyAndUser(survey, user)) {
-            // Если проходил — показываем страницу-заглушку
             return "survey_passed";
         }
 
@@ -86,25 +85,20 @@ public class MainController {
         User user = (User) session.getAttribute("user");
         Survey survey = surveyRepo.findByUuid(uuid);
 
-        // --- ПРОВЕРКА ПРИ ОТПРАВКЕ ---
         if (submissionRepo.existsBySurveyAndUser(survey, user)) {
             return "survey_passed";
         }
 
-        // Создаем запись о прохождении
         Submission submission = new Submission();
         submission.setSurvey(survey);
         submission.setUser(user);
         submissionRepo.save(submission);
 
-        // Сохраняем ответы
         for (Question q : survey.getQuestions()) {
-            String val = params.get("q_" + q.getId()); // Получаем "YES", "NO" или "NOT_SURE"
-
+            String val = params.get("q_" + q.getId());
             if (val != null) {
                 Answer a = new Answer();
                 a.setQuestion(q);
-                // Устанавливаем значение Enum
                 a.setValue(AnswerValue.valueOf(val));
                 a.setSubmission(submission);
                 answerRepo.save(a);
@@ -121,31 +115,46 @@ public class MainController {
     @PostMapping("/manager/stats")
     public String getStats(@RequestParam String linkOrUuid, Model model) {
         String cleanLink = linkOrUuid.trim();
-        if (cleanLink.endsWith("/")) {
-            cleanLink = cleanLink.substring(0, cleanLink.length() - 1);
-        }
-
-        String uuid;
-        if (cleanLink.contains("/")) {
-            uuid = cleanLink.substring(cleanLink.lastIndexOf("/") + 1);
-        } else {
-            uuid = cleanLink;
-        }
+        if (cleanLink.endsWith("/")) cleanLink = cleanLink.substring(0, cleanLink.length() - 1);
+        String uuid = cleanLink.contains("/") ? cleanLink.substring(cleanLink.lastIndexOf("/") + 1) : cleanLink;
 
         Survey survey = surveyRepo.findByUuid(uuid);
-
         if (survey == null) {
             model.addAttribute("error", "Опрос не найден!");
             return "manager_search";
         }
 
         List<Submission> submissions = submissionRepo.findBySurvey(survey);
+
+        // --- СБОР АНАЛИТИКИ ПО ВОПРОСАМ ---
+        // Карта: ID вопроса -> { "YES": кол-во, "NO": кол-во, "NOT_SURE": кол-во }
+        Map<Long, Map<String, Integer>> stats = new HashMap<>();
+
+        for (Question q : survey.getQuestions()) {
+            Map<String, Integer> counts = new HashMap<>();
+            counts.put("YES", 0);
+            counts.put("NO", 0);
+            counts.put("NOT_SURE", 0);
+
+            for (Submission sub : submissions) {
+                for (Answer ans : sub.getAnswers()) {
+                    if (ans.getQuestion().getId().equals(q.getId())) {
+                        String val = ans.getValue().name();
+                        counts.put(val, counts.get(val) + 1);
+                    }
+                }
+            }
+            stats.put(q.getId(), counts);
+        }
+
+        model.addAttribute("survey", survey);
         model.addAttribute("count", submissions.size());
         model.addAttribute("submissions", submissions);
+        model.addAttribute("stats", stats); // Отправляем расчеты в HTML
         return "manager_stats";
     }
 
-    // --- ЮЗЕР (Поиск опроса вручную) ---
+    // --- ЮЗЕР (Поиск опроса) ---
     @GetMapping("/user/search")
     public String userSearchPage() {
         return "user_search";
@@ -154,24 +163,15 @@ public class MainController {
     @PostMapping("/user/search")
     public String searchSurveyToTake(@RequestParam String linkOrUuid, Model model) {
         String cleanLink = linkOrUuid.trim();
-        if (cleanLink.endsWith("/")) {
-            cleanLink = cleanLink.substring(0, cleanLink.length() - 1);
-        }
-
-        String uuid;
-        if (cleanLink.contains("/")) {
-            uuid = cleanLink.substring(cleanLink.lastIndexOf("/") + 1);
-        } else {
-            uuid = cleanLink;
-        }
+        if (cleanLink.endsWith("/")) cleanLink = cleanLink.substring(0, cleanLink.length() - 1);
+        String uuid = cleanLink.contains("/") ? cleanLink.substring(cleanLink.lastIndexOf("/") + 1) : cleanLink;
 
         Survey survey = surveyRepo.findByUuid(uuid);
         if (survey == null) {
-            model.addAttribute("error", "Опрос не найден! Проверьте ссылку или код.");
+            model.addAttribute("error", "Опрос не найден!");
             return "user_search";
         }
 
-        // Если опрос найден, метод takeSurvey (@GetMapping) сам выполнит проверку на повторное прохождение
         return "redirect:/survey/" + uuid;
     }
 }
