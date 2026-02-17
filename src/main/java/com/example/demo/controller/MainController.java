@@ -1,10 +1,6 @@
-package com.example.demo.controller; // проверь, чтобы имя пакета было верным
+package com.example.demo.controller;
 
-import com.example.demo.model.Survey;
-import com.example.demo.model.Question;
-import com.example.demo.model.User;
-import com.example.demo.model.Submission;
-import com.example.demo.model.Answer;
+import com.example.demo.model.*;
 import com.example.demo.repository.*;
 
 import jakarta.servlet.http.HttpSession;
@@ -40,7 +36,6 @@ public class MainController {
 
     @PostMapping("/admin/create")
     public String createSurvey(@RequestParam List<String> questionTexts, Model model) {
-        // Ограничение 10 вопросов
         if (questionTexts.size() > 10) return "error";
 
         Survey survey = new Survey();
@@ -67,10 +62,21 @@ public class MainController {
         User user = (User) session.getAttribute("user");
         if (user == null) {
             session.setAttribute("redirectAfterLogin", "/survey/" + uuid);
-            return "redirect:/login"; // или регистрация
+            return "redirect:/login";
         }
 
         Survey survey = surveyRepo.findByUuid(uuid);
+        if (survey == null) {
+            model.addAttribute("error", "Опрос не найден");
+            return "user_search";
+        }
+
+        // --- ПРОВЕРКА: Проходил ли уже? ---
+        if (submissionRepo.existsBySurveyAndUser(survey, user)) {
+            // Если проходил — показываем страницу-заглушку
+            return "survey_passed";
+        }
+
         model.addAttribute("survey", survey);
         return "take_survey";
     }
@@ -80,18 +86,29 @@ public class MainController {
         User user = (User) session.getAttribute("user");
         Survey survey = surveyRepo.findByUuid(uuid);
 
+        // --- ПРОВЕРКА ПРИ ОТПРАВКЕ ---
+        if (submissionRepo.existsBySurveyAndUser(survey, user)) {
+            return "survey_passed";
+        }
+
+        // Создаем запись о прохождении
         Submission submission = new Submission();
         submission.setSurvey(survey);
         submission.setUser(user);
         submissionRepo.save(submission);
 
+        // Сохраняем ответы
         for (Question q : survey.getQuestions()) {
-            String val = params.get("q_" + q.getId()); // получаем "true" или "false"
-            Answer a = new Answer();
-            a.setQuestion(q);
-            a.setYesNoValue(Boolean.valueOf(val));
-            a.setSubmission(submission);
-            answerRepo.save(a);
+            String val = params.get("q_" + q.getId()); // Получаем "YES", "NO" или "NOT_SURE"
+
+            if (val != null) {
+                Answer a = new Answer();
+                a.setQuestion(q);
+                // Устанавливаем значение Enum
+                a.setValue(AnswerValue.valueOf(val));
+                a.setSubmission(submission);
+                answerRepo.save(a);
+            }
         }
 
         return "redirect:/home";
@@ -103,43 +120,32 @@ public class MainController {
 
     @PostMapping("/manager/stats")
     public String getStats(@RequestParam String linkOrUuid, Model model) {
-        // 1. Убираем лишние пробелы
         String cleanLink = linkOrUuid.trim();
-
-        // 2. Логика извлечения UUID (если в конце есть слэш - убираем его)
         if (cleanLink.endsWith("/")) {
             cleanLink = cleanLink.substring(0, cleanLink.length() - 1);
         }
 
         String uuid;
         if (cleanLink.contains("/")) {
-            // Если это полная ссылка http://.../survey/123-abc
             uuid = cleanLink.substring(cleanLink.lastIndexOf("/") + 1);
         } else {
-            // Если вставили только код
             uuid = cleanLink;
         }
-
-        // ВЫВОД В КОНСОЛЬ (Смотри сюда при запуске!)
-        System.out.println("Менеджер ищет UUID: " + uuid);
 
         Survey survey = surveyRepo.findByUuid(uuid);
 
         if (survey == null) {
-            System.out.println("Опрос с таким UUID не найден в БД!");
-            model.addAttribute("error", "Опрос не найден! Возможно, вы перезапустили сервер (БД очистилась) или ссылка неверна.");
-            return "manager_search"; // Возвращаем на страницу поиска с ошибкой
+            model.addAttribute("error", "Опрос не найден!");
+            return "manager_search";
         }
 
         List<Submission> submissions = submissionRepo.findBySurvey(survey);
-        System.out.println("Найдено прохождений: " + submissions.size());
-
-        model.addAttribute("count", submissions.size()); // Добавляем количество
+        model.addAttribute("count", submissions.size());
         model.addAttribute("submissions", submissions);
         return "manager_stats";
     }
 
-    // --- ЮЗЕР (Ручной ввод ссылки) ---
+    // --- ЮЗЕР (Поиск опроса вручную) ---
     @GetMapping("/user/search")
     public String userSearchPage() {
         return "user_search";
@@ -147,7 +153,6 @@ public class MainController {
 
     @PostMapping("/user/search")
     public String searchSurveyToTake(@RequestParam String linkOrUuid, Model model) {
-        // 1. Очистка и парсинг UUID (то же самое, что у менеджера)
         String cleanLink = linkOrUuid.trim();
         if (cleanLink.endsWith("/")) {
             cleanLink = cleanLink.substring(0, cleanLink.length() - 1);
@@ -160,19 +165,13 @@ public class MainController {
             uuid = cleanLink;
         }
 
-        // 2. Проверяем, существует ли опрос
         Survey survey = surveyRepo.findByUuid(uuid);
         if (survey == null) {
             model.addAttribute("error", "Опрос не найден! Проверьте ссылку или код.");
             return "user_search";
         }
 
-        // 3. Если найден — редирект на страницу прохождения
+        // Если опрос найден, метод takeSurvey (@GetMapping) сам выполнит проверку на повторное прохождение
         return "redirect:/survey/" + uuid;
     }
-
-
-
-
-
 }

@@ -32,10 +32,22 @@
             <td th:text="${sub.user.email}">Email</td>
             <td>
                 <ul class="list-unstyled mb-0">
-                    <li th:each="ans : ${sub.answers}">
+                    <li th:each="ans : ${sub.answers}" class="mb-2">
+                        <!-- Текст вопроса -->
                         <small th:text="${ans.question.text}"></small>:
-                        <b th:text="${ans.yesNoValue} ? 'ДА' : 'НЕТ'"
-                           th:class="${ans.yesNoValue} ? 'text-success' : 'text-danger'"></b>
+
+                        <!-- Логика отображения трех вариантов -->
+                        <!-- Если ДА -> Зеленый -->
+                        <span th:if="${ans.value.name() == 'YES'}"
+                              class="badge bg-success">ДА</span>
+
+                        <!-- Если НЕТ -> Красный -->
+                        <span th:if="${ans.value.name() == 'NO'}"
+                              class="badge bg-danger">НЕТ</span>
+
+                        <!-- Если НЕ УВЕРЕН -> Серый -->
+                        <span th:if="${ans.value.name() == 'NOT_SURE'}"
+                              class="badge bg-secondary">НЕ УВЕРЕН</span>
                     </li>
                 </ul>
             </td>

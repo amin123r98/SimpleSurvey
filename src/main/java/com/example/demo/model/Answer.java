@@ -10,7 +10,11 @@ public class Answer {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private Boolean yesNoValue;
+    // Исправление ошибки:
+    // Мы меняем имя колонки в БД на "answer_value", чтобы избежать конфликта со словом "value"
+    @Enumerated(EnumType.STRING)
+    @Column(name = "answer_value")
+    private AnswerValue value;
 
     @ManyToOne
     private Question question;
