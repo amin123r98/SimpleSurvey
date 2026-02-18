@@ -1,42 +1,144 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
-    <title>Прохождение теста</title>
+    <meta charset="UTF-8">
+    <title>Прохождение опроса</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+
+    <style>
+        body { background-color: #f0f2f5; }
+        .survey-container { max-width: 650px; margin: 40px auto; }
+
+        .question-card {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 25px;
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        /* Скрываем стандартный кружок радио-кнопки */
+        .btn-check { display: none; }
+
+        /* Общий стиль для плитки ответа */
+        .option-label {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #fff;
+            border: 2px solid #e9ecef;
+            border-radius: 15px;
+            padding: 18px 25px;
+            margin-bottom: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 1.1rem;
+            font-weight: 500;
+        }
+
+        .option-label:hover {
+            border-color: #cbd3da;
+            background-color: #f8f9fa;
+        }
+
+        /* --- ГЛАВНОЕ: Стили для ВЫБРАННОГО ответа --- */
+
+        /* Если выбрано ДА */
+        .btn-check[value="YES"]:checked + .option-label {
+            background-color: #d1e7dd !important;
+            border-color: #198754 !important;
+            color: #0f5132 !important;
+            box-shadow: 0 4px 12px rgba(25, 135, 84, 0.2);
+        }
+
+        /* Если выбрано НЕТ */
+        .btn-check[value="NO"]:checked + .option-label {
+            background-color: #f8d7da !important;
+            border-color: #dc3545 !important;
+            color: #842029 !important;
+            box-shadow: 0 4px 12px rgba(220, 53, 69, 0.2);
+        }
+
+        /* Если выбрано НЕ УВЕРЕН */
+        .btn-check[value="NOT_SURE"]:checked + .option-label {
+            background-color: #e2e3e5 !important;
+            border-color: #6c757d !important;
+            color: #41464b !important;
+            box-shadow: 0 4px 12px rgba(108, 117, 125, 0.2);
+        }
+
+        /* Добавляем иконку-галочку только в выбранный элемент */
+        .check-icon { display: none; font-size: 1.2rem; }
+        .btn-check:checked + .option-label .check-icon {
+            display: inline-block;
+        }
+
+        .progress { height: 10px; border-radius: 20px; margin-bottom: 30px; }
+    </style>
 </head>
 <body>
-<div class="container mt-5">
-    <h2>Опрос</h2>
+
+<div class="container survey-container">
+    <div class="text-center mb-4">
+        <h2 class="fw-bold">Заполнение опроса</h2>
+        <p class="text-muted small">Пожалуйста, ответьте на все вопросы</p>
+    </div>
+
     <form th:action="@{/survey/{uuid}(uuid=${survey.uuid})}" method="post">
 
-        <div th:each="q, stat : ${survey.questions}" class="card mb-4 p-4 shadow-sm border-0">
-            <h5 class="fw-bold mb-3" th:text="${stat.count} + '. ' + ${q.text}">Вопрос</h5>
+        <div th:each="q, stat : ${survey.questions}" class="question-card shadow-sm">
+            <h5 class="mb-4 fw-bold">
+                <span class="text-muted me-2" th:text="${stat.count} + '.'">1.</span>
+                <span th:text="${q.text}">Текст вопроса</span>
+            </h5>
 
-            <div class="d-flex gap-4">
-                <!-- ДА -->
-                <div class="form-check">
-                    <input class="form-check-input" type="radio" th:name="'q_' + ${q.id}" value="YES" id="yes" required>
-                    <label class="form-check-label text-success fw-bold">Да</label>
-                </div>
+            <div class="options-group">
+                <!-- Вариант ДА -->
+                <input type="radio" class="btn-check" th:name="'q_' + ${q.id}" value="YES"
+                       th:id="'yes_' + ${q.id}" required>
+                <label class="option-label" th:for="'yes_' + ${q.id}">
+                    <span><i class="bi bi-hand-thumbs-up me-2"></i> Да</span>
+                    <i class="bi bi-check-circle-fill check-icon"></i>
+                </label>
 
-                <!-- НЕТ -->
-                <div class="form-check">
-                    <input class="form-check-input" type="radio" th:name="'q_' + ${q.id}" value="NO" id="no">
-                    <label class="form-check-label text-danger fw-bold">Нет</label>
-                </div>
+                <!-- Вариант НЕ УВЕРЕН -->
+                <input type="radio" class="btn-check" th:name="'q_' + ${q.id}" value="NOT_SURE"
+                       th:id="'ns_' + ${q.id}">
+                <label class="option-label" th:for="'ns_' + ${q.id}">
+                    <span><i class="bi bi-question-circle me-2"></i> Не уверен</span>
+                    <i class="bi bi-check-circle-fill check-icon"></i>
+                </label>
 
-                <!-- НЕ УВЕРЕН -->
-                <div class="form-check">
-                    <input class="form-check-input" type="radio" th:name="'q_' + ${q.id}" value="NOT_SURE" id="ns">
-                    <label class="form-check-label text-secondary fw-bold">Не уверен</label>
-                </div>
+                <!-- Вариант НЕТ -->
+                <input type="radio" class="btn-check" th:name="'q_' + ${q.id}" value="NO"
+                       th:id="'no_' + ${q.id}">
+                <label class="option-label" th:for="'no_' + ${q.id}">
+                    <span><i class="bi bi-hand-thumbs-down me-2"></i> Нет</span>
+                    <i class="bi bi-check-circle-fill check-icon"></i>
+                </label>
             </div>
         </div>
 
-        <div class="d-grid gap-2">
-            <button type="submit" class="btn btn-primary btn-lg">Отправить ответы</button>
-        </div>
+        <button type="submit" class="btn btn-primary btn-lg w-100 rounded-pill shadow mt-4 mb-5">
+            Отправить ответы <i class="bi bi-send-fill ms-2"></i>
+        </button>
     </form>
 </div>
+
+<script>
+    // Скрипт для выделения всей карточки вопроса при выборе ответа
+    document.querySelectorAll('.btn-check').forEach(radio => {
+        radio.addEventListener('change', function() {
+            // Убираем обводку у всех карточек (опционально)
+            // И добавляем активной карточке
+            const card = this.closest('.question-card');
+            document.querySelectorAll('.question-card').forEach(c => c.style.borderColor = 'transparent');
+            card.style.borderColor = '#0d6efd';
+        });
+    });
+</script>
+
 </body>
 </html>
